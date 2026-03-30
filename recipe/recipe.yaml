@@ -41,6 +41,12 @@ tests:
   - python:
       imports:
         - cel_expr_python
+        - cel_expr_python.ext.ext_bindings
+        - cel_expr_python.ext.ext_encoders
+        - cel_expr_python.ext.ext_math
+        - cel_expr_python.ext.ext_optional
+        - cel_expr_python.ext.ext_proto
+        - cel_expr_python.ext.ext_string
       pip_check: true
 
 about:
