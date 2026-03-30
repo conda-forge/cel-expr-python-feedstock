@@ -1,0 +1,115 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Stephan Wenger <stephan.wenger@quantco.com>
+Date: Sun, 30 Mar 2026 00:00:00 +0000
+Subject: [PATCH] Fix protobuf descriptor double-registration crash
+
+When using shared libprotobuf (single global descriptor pool), importing
+extension modules after cel_expr_python crashes because cel/expr proto
+descriptors get registered twice: once from cel.so, and again from the
+extension .so.
+
+Root cause: cel-cpp's common:operators depends on syntax_cc_proto (for
+two functions that take cel::expr::Expr&), and this propagates
+transitively through parser:macro into bindings_ext, proto_ext,
+compiler:optional, and math_ext_macros. Additionally, ext_math has an
+unnecessary explicit dep on checked_cc_proto.
+
+Fix:
+- Patch cel-cpp to make the syntax_cc_proto dep in common:operators an
+  implementation_dep (not propagated to dependents), and forward-declare
+  cel::expr::Expr in the header instead of including the proto header.
+- Remove the explicit checked_cc_proto dep from ext_math.
+---
+ BUILD.bazel                     |  1 +
+ MODULE.bazel                    |  2 ++
+ cel_cpp_fix_operators.patch     | 48 +++++++++++++++++++++++++++++++++
+ cel_expr_python/ext/BUILD       |  1 -
+ 4 files changed, 51 insertions(+), 1 deletion(-)
+ create mode 100644 BUILD.bazel
+ create mode 100644 cel_cpp_fix_operators.patch
+
+diff --git a/BUILD.bazel b/BUILD.bazel
+new file mode 100644
+index 0000000..e3b0816
+--- /dev/null
++++ b/BUILD.bazel
+@@ -0,0 +1 @@
++exports_files(["cel_cpp_fix_operators.patch"])
+diff --git a/MODULE.bazel b/MODULE.bazel
+index f996c9b..abcdef0 100644
+--- a/MODULE.bazel
++++ b/MODULE.bazel
+@@ -23,6 +23,8 @@ _CEL_CPP_SHA256 = "c7596db4538722e78f9c7f7ae704a15fd48d5e84254d717b5b558c3b1b01
+
+ archive_override(
+     module_name = "cel-cpp",
++    patches = ["//:cel_cpp_fix_operators.patch"],
++    patch_strip = 1,
+     sha256 = _CEL_CPP_SHA256,
+     strip_prefix = "cel-cpp-" + _CEL_CPP_COMMIT,
+     url = "https://github.com/google/cel-cpp/archive/" + _CEL_CPP_COMMIT + ".tar.gz",
+diff --git a/cel_cpp_fix_operators.patch b/cel_cpp_fix_operators.patch
+new file mode 100644
+index 0000000..1234567
+--- /dev/null
++++ b/cel_cpp_fix_operators.patch
+@@ -0,0 +1,48 @@
++diff --git a/common/BUILD b/common/BUILD
++--- a/common/BUILD
+++++ b/common/BUILD
++@@ -284,10 +284,13 @@ cc_library(
++     name = "operators",
++     srcs = [
++         "operators.cc",
++     ],
++     hdrs = [
++         "operators.h",
++     ],
++     deps = [
++         "@com_google_absl//absl/container:flat_hash_map",
++         "@com_google_absl//absl/strings",
++         "@com_google_absl//absl/types:optional",
++-        "@com_google_cel_spec//proto/cel/expr:syntax_cc_proto",
+++    ],
+++    implementation_deps = [
+++        "@com_google_cel_spec//proto/cel/expr:syntax_cc_proto",
++     ],
++ )
++diff --git a/common/operators.h b/common/operators.h
++--- a/common/operators.h
+++++ b/common/operators.h
++@@ -18,7 +18,10 @@
++ #include <map>
++ #include <string>
++
++-#include "cel/expr/syntax.pb.h"
+++namespace cel::expr {
+++class Expr;
+++}  // namespace cel::expr
+++
++ #include "absl/strings/string_view.h"
++ #include "absl/types/optional.h"
++
++diff --git a/common/operators.cc b/common/operators.cc
++--- a/common/operators.cc
+++++ b/common/operators.cc
++@@ -14,6 +14,7 @@
++
++ #include "common/operators.h"
++
+++#include "cel/expr/syntax.pb.h"
++ #include <string>
++
++ #include "absl/container/flat_hash_map.h"
+diff --git a/cel_expr_python/ext/BUILD b/cel_expr_python/ext/BUILD
+index 1234567..abcdefg 100644
+--- a/cel_expr_python/ext/BUILD
++++ b/cel_expr_python/ext/BUILD
+@@ -67,7 +67,6 @@ pybind_extension(
+         "@com_google_cel_cpp//runtime:function",
+         "@com_google_cel_cpp//runtime:runtime_builder",
+         "@com_google_cel_cpp//runtime:runtime_options",
+-        "@com_google_cel_spec//proto/cel/expr:checked_cc_proto",
+         "@com_google_protobuf//:protobuf",
+     ],
+ )
