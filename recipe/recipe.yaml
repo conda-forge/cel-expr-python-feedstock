@@ -49,8 +49,6 @@ tests:
         - cel_expr_python.ext.ext_proto
         - cel_expr_python.ext.ext_string
       pip_check: true
-  - script:
-      - python -c "from cel_expr_python.ext import *"
 
 about:
   summary: This is a Python wrapper for the CEL C++ implementation.
