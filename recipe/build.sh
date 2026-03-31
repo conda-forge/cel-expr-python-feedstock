@@ -36,6 +36,10 @@ sed -i "s:ABSEIL_VERSION:${ABSEIL_VERSION}:" \
 cp release/pyproject.toml release/setup.py .
 # Substitute $VERSION in pyproject.toml with the value of VERSION.
 sed -i "s/\$VERSION/${PKG_VERSION}/g" pyproject.toml
+# Remove cel_expr_python.ext.* extension modules from setup.py. These link to
+# the same protobuf descriptors as the main module, causing an internal protobuf
+# assertion failure (duplicate descriptors in the pool) when both are imported.
+sed -i '/BazelExtension(/{N;/cel_expr_python\.ext\./{N;N;d}}' setup.py
 rm -f cel_expr_python/*_test.py
 $PYTHON -m pip install -vvv .
 bazel clean --expunge
