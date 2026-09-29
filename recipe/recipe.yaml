@@ -9,7 +9,7 @@ package:
 
 source:
   - url: https://github.com/cel-expr/cel-python/archive/refs/tags/v${{ version }}.tar.gz
-    sha256: f08f2297c40411ee8d3dc50e0ef3eecad2721d712b7bca2767a4379ce6e24376
+    sha256: 4b4a46eee824dc1c4a77ad1162f901a18be68555cbcd117b247dc16a0e10052d
     patches:
       # On Windows bazel builds abseil/protobuf/cel-cpp from the Bazel registry
       # and links them statically; the conda system-library overrides are only
@@ -17,7 +17,6 @@ source:
       - if: not win
         then:
           - 0001-Use-system-dependencies.patch
-          - 0002-Use-absl-string-view.patch
   # The conda-forge bazel package is built from source and reports `no_version`;
   # its Windows build is missing the `_cc_internal.freeze` native symbol that
   # rules_cc requires (see bazelbuild/bazel#29158). Use the official Bazel release
@@ -30,7 +29,7 @@ source:
 
 build:
   skip: match(python, '<3.11')
-  number: 0
+  number: 2
 
 requirements:
   build:
@@ -41,6 +40,7 @@ requirements:
       then:
         - bazel 8.*
         - bazel-toolchain
+        - libprotobuf
         - sed
       else:
         - m2-base
