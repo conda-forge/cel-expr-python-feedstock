@@ -29,7 +29,7 @@ source:
 
 build:
   skip: match(python, '<3.11')
-  number: 3
+  number: 4
 
 requirements:
   build:
