@@ -1,7 +1,7 @@
 schema_version: 1
 
 context:
-  version: "0.1.3"
+  version: "0.1.4"
 
 package:
   name: cel-expr-python
@@ -9,7 +9,7 @@ package:
 
 source:
   - url: https://github.com/cel-expr/cel-python/archive/refs/tags/v${{ version }}.tar.gz
-    sha256: 4b4a46eee824dc1c4a77ad1162f901a18be68555cbcd117b247dc16a0e10052d
+    sha256: ccf1c2e9c4fe282d37e28a891342ee939c0c86ae3ab90dbcc3769bf1db61240a
     patches:
       # On Windows bazel builds abseil/protobuf/cel-cpp from the Bazel registry
       # and links them statically; the conda system-library overrides are only
@@ -29,7 +29,7 @@ source:
 
 build:
   skip: match(python, '<3.11')
-  number: 4
+  number: 0
 
 requirements:
   build:
