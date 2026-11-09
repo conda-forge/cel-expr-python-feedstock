@@ -15,6 +15,14 @@ setlocal enabledelayedexpansion
 set "PATH=%SRC_DIR%;%PATH%"
 echo 8.7.0>.bazelversion
 
+@rem Bazel clones cel-cpp and cel-spec with git. The MSYS2 git that conda-forge
+@rem ships as m2-git lives in <prefix>\Library\usr\bin, which is earlier on PATH
+@rem than Git for Windows, and it cannot spawn its https remote helper in this
+@rem environment ("fatal: remote helper 'https' aborted session"). Prefer the
+@rem Git for Windows installation of the CI image instead.
+if exist "%ProgramFiles%\Git\cmd\git.exe" set "PATH=%ProgramFiles%\Git\cmd;%PATH%"
+git --version
+
 @rem Point Bazel at the MSYS2 bash provided by m2-base.
 set "BAZEL_SH=%BUILD_PREFIX%\Library\usr\bin\bash.exe"
 
@@ -38,6 +46,8 @@ copy release\pyproject.toml .
 if %ERRORLEVEL% neq 0 exit 1
 copy release\setup.py .
 if %ERRORLEVEL% neq 0 exit 1
+copy release\bazel_build.py .
+if %ERRORLEVEL% neq 0 exit 1
 
 REM Remove any windows --remote_cache= line from .bazelrc to avoid issues with CI
 sed -i "/windows --remote_cache=/d" .bazelrc
@@ -48,12 +58,6 @@ powershell -NoProfile -Command "(Get-Content pyproject.toml) -replace '\$VERSION
 @rem Pin the hermetic Python interpreter that rules_python uses to the version
 @rem we are currently building for.
 sed -i "s/python_version = \"3.11\"/python_version = \"%PY_VER%\"/" MODULE.bazel
-if %ERRORLEVEL% neq 0 exit 1
-
-@rem setup.py re-applies the python version with `sed -i 's/.../.../'` through a
-@rem POSIX shell. cmd.exe does not strip the single quotes, so disable that call;
-@rem we already pinned the version in MODULE.bazel above.
-sed -i "s/subprocess.check_call(sed_command, shell=True)/pass/" setup.py
 if %ERRORLEVEL% neq 0 exit 1
 
 @rem Remove cel_expr_python.ext.* extension modules from setup.py. These link to
