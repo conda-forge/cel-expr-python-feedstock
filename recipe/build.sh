@@ -29,6 +29,49 @@ cp -ap "${PREFIX}/share/bazel/systemlibs/protobuf" third_party/systemlibs/
 cp -ap "${PREFIX}/share/bazel/protobuf/bazel" third_party/systemlibs/protobuf/
 cp -ap "${PREFIX}/share/bazel/upb" third_party/systemlibs/protobuf/
 
+# libabseil-bazel-systemlib only declares targets for the absl libraries that
+# contain compiled code. cel-cpp >= 0.17 additionally depends on header-only
+# absl targets, which are not part of that module, so declare them here. The
+# headers themselves are picked up from ${PREFIX}/include by the toolchain.
+cat >> third_party/systemlibs/absl/absl/status/BUILD <<'EOF'
+
+cc_library(
+    name = "status_builder",
+    linkopts = ["-labsl_status_builder"],
+    deps = [
+        ":status",
+        "//absl/base:core_headers",
+        "//absl/strings",
+    ],
+)
+
+cc_library(
+    name = "status_macros",
+    deps = [
+        ":status",
+        ":statusor",
+        "//absl/base:core_headers",
+        "//absl/strings",
+    ],
+)
+EOF
+cat >> third_party/systemlibs/absl/absl/strings/BUILD <<'EOF'
+
+cc_library(
+    name = "resize_and_overwrite",
+)
+EOF
+cat >> third_party/systemlibs/absl/absl/types/BUILD <<'EOF'
+
+cc_library(
+    name = "optional_ref",
+)
+
+cc_library(
+    name = "source_location",
+)
+EOF
+
 export ABSEIL_VERSION="$(grep -oP '(?<="version": ")[^"]+' $PREFIX/conda-meta/libabseil-[0-9]*.json)"
 export PROTOC_VERSION="$(grep -oP '(?<="version": ")[^"]+' $PREFIX/conda-meta/libprotobuf-[0-9]*.json | sed -E 's/^[0-9]+\.([0-9]+\.[0-9]+)$/\1/')"
 sed -i "s:PROTOC_VERSION:${PROTOC_VERSION}:" MODULE.bazel
@@ -37,7 +80,7 @@ sed -i "s:ABSEIL_VERSION:${ABSEIL_VERSION}:" \
     third_party/systemlibs/absl/MODULE.bazel \
     third_party/systemlibs/protobuf/MODULE.bazel
 
-cp release/pyproject.toml release/setup.py .
+cp release/pyproject.toml release/setup.py release/bazel_build.py .
 # Substitute $VERSION in pyproject.toml with the value of VERSION.
 sed -i "s/\$VERSION/${PKG_VERSION}/g" pyproject.toml
 # Remove cel_expr_python.ext.* extension modules from setup.py. These link to

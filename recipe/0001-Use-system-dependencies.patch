@@ -1,27 +1,34 @@
-From caa9c865421a3ff07e455cb3f59b5d8504d4095b Mon Sep 17 00:00:00 2001
+From 63e3e84fb8ce7a375ff27cfe489367c1acf65ede Mon Sep 17 00:00:00 2001
 From: "Uwe L. Korn" <uwe.korn@quantco.com>
-Date: Wed, 18 Mar 2026 10:19:15 +0100
+Date: Mon, 9 Nov 2026 11:38:28 +0000
 Subject: [PATCH] Use system dependencies
 
+Link against the abseil and protobuf libraries provided by conda-forge
+instead of building them from the Bazel registry. The concrete versions are
+substituted into MODULE.bazel by the feedstock build script.
 ---
- MODULE.bazel          | 13 +++++++++++--
+ MODULE.bazel          | 17 +++++++++++------
  cel_expr_python/BUILD |  1 -
- 2 files changed, 11 insertions(+), 3 deletions(-)
+ 2 files changed, 11 insertions(+), 7 deletions(-)
 
 diff --git a/MODULE.bazel b/MODULE.bazel
-index 089d1b1..96695c2 100644
+index bf1f084..a244807 100644
 --- a/MODULE.bazel
 +++ b/MODULE.bazel
-@@ -3,7 +3,7 @@ module(
+@@ -3,11 +3,7 @@ module(
  )
  
  # https://registry.bazel.build/modules/abseil-cpp
--bazel_dep(name = "abseil-cpp", version = "20260107.0", repo_name = "com_google_absl")
+-bazel_dep(name = "abseil-cpp", version = "20260817.0", repo_name = "com_google_absl")
+-single_version_override(
+-    module_name = "abseil-cpp",
+-    version = "20260817.0",
+-)
 +bazel_dep(name = "abseil-cpp", version = "ABSEIL_VERSION", repo_name = "com_google_absl")
  
  # https://registry.bazel.build/modules/abseil-py
  bazel_dep(name = "abseil-py", version = "2.4.0", repo_name = "com_google_absl_py")
-@@ -29,7 +29,16 @@ bazel_dep(name = "googletest", version = "1.17.0.bcr.2", repo_name = "com_google
+@@ -38,7 +34,16 @@ bazel_dep(name = "googletest", version = "1.17.0.bcr.2", repo_name = "com_google
  bazel_dep(name = "platforms", version = "1.0.0")
  
  # https://registry.bazel.build/modules/protobuf
@@ -40,14 +47,17 @@ index 089d1b1..96695c2 100644
  # https://registry.bazel.build/modules/pybind11_abseil
  bazel_dep(name = "pybind11_abseil", version = "202402.0")
 diff --git a/cel_expr_python/BUILD b/cel_expr_python/BUILD
-index 190c18a..5381987 100644
+index 02c8f9c..2123eef 100644
 --- a/cel_expr_python/BUILD
 +++ b/cel_expr_python/BUILD
-@@ -58,7 +58,6 @@ pybind_library(
-         "@com_google_absl//absl/status:statusor",
+@@ -64,7 +64,6 @@ pybind_library(
          "@com_google_absl//absl/strings",
          "@com_google_absl//absl/strings:str_format",
+         "@com_google_absl//absl/synchronization",
 -        "@com_google_absl//absl/time",
          "@com_google_absl//absl/types:optional",
          "@com_google_absl//absl/types:span",
          "@com_google_cel_cpp//checker:type_checker_builder",
+-- 
+2.43.0
+

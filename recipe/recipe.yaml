@@ -9,7 +9,7 @@ package:
 
 source:
   - url: https://github.com/cel-expr/cel-python/archive/refs/tags/v${{ version }}.tar.gz
-    sha256: ccf1c2e9c4fe282d37e28a891342ee939c0c86ae3ab90dbcc3769bf1db61240a
+    sha256: d3c7d9c273cece48c97ed573885642421c975c629b89308d834d06fdd7fa774f
     patches:
       # On Windows bazel builds abseil/protobuf/cel-cpp from the Bazel registry
       # and links them statically; the conda system-library overrides are only
