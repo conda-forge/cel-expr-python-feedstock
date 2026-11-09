@@ -15,6 +15,14 @@ setlocal enabledelayedexpansion
 set "PATH=%SRC_DIR%;%PATH%"
 echo 8.7.0>.bazelversion
 
+@rem Bazel clones cel-cpp and cel-spec with git. The MSYS2 git that conda-forge
+@rem ships as m2-git lives in <prefix>\Library\usr\bin, which is earlier on PATH
+@rem than Git for Windows, and it cannot spawn its https remote helper in this
+@rem environment ("fatal: remote helper 'https' aborted session"). Prefer the
+@rem Git for Windows installation of the CI image instead.
+if exist "%ProgramFiles%\Git\cmd\git.exe" set "PATH=%ProgramFiles%\Git\cmd;%PATH%"
+git --version
+
 @rem Point Bazel at the MSYS2 bash provided by m2-base.
 set "BAZEL_SH=%BUILD_PREFIX%\Library\usr\bin\bash.exe"
 
