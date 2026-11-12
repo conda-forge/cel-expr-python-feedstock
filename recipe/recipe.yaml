@@ -29,7 +29,7 @@ source:
 
 build:
   skip: match(python, '<3.11')
-  number: 0
+  number: 1
 
 requirements:
   build:
@@ -63,6 +63,9 @@ tests:
   - python:
       imports:
         - cel_expr_python
+        # cel_expr_python is a namespace package, so importing it does not load
+        # the extension module (or catch missing libraries).
+        - cel_expr_python.cel
       pip_check: true
 
 about:
