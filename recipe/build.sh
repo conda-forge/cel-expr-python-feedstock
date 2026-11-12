@@ -49,6 +49,9 @@ cc_library(
     name = "status_macros",
     deps = [
         ":status",
+        # As upstream: the macros use absl::StatusBuilder, which needs
+        # libabsl_status_builder at link time.
+        ":status_builder",
         ":statusor",
         "//absl/base:core_headers",
         "//absl/strings",
